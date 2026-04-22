@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ATLAXDIVO · Torneo Star Wars 4vs4 — Panel de Jugadores</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:       #001429;
+    --surface:  #001c37;
+    --card:     #062b4c;
+    --card-hi:  #153658;
+    --primary:  #92ccff;
+    --gold:     #ecc22c;
+    --gold2:    #cea701;
+    --text:     #d2e4ff;
+    --muted:    #7a9bbf;
+    --border:   rgba(64,72,80,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Manrope', sans-serif; min-height: 100vh; }
+  .hl { font-family: 'Space Grotesk', sans-serif; }
+  .lbl { font-family: 'Inter', sans-serif; }
+
+  /* Stars background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(146,204,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 10%, rgba(236,194,44,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 70%, rgba(146,204,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 50%, rgba(146,204,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 55%, rgba(255,255,255,0.15) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 85%, rgba(236,194,44,0.2) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .glass { background: rgba(6,43,76,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border); }
+  .gold-gradient { background: linear-gradient(135deg, var(--gold), var(--gold2)); }
+  .primary-gradient { background: linear-gradient(135deg, #4497d3, var(--primary)); }
+
+  /* Cards */
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 24px; transition: transform 0.2s, border-color 0.2s; }
+  .stat-card:hover { transform: translateY(-2px); border-color: rgba(236,194,44,0.3); }
+
+  /* Player row */
+  .player-row { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; transition: all 0.2s; display: flex; align-items: center; gap: 16px; }
+  .player-row:hover { border-color: rgba(146,204,255,0.3); background: var(--card-hi); }
+
+  /* Level badges */
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; font-family: 'Inter', sans-serif; }
+  .badge-novato    { background: rgba(107,114,128,0.3); color: #9ca3af; border: 1px solid rgba(107,114,128,0.4); }
+  .badge-rocky     { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+  .badge-intermedio { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .badge-avanzado  { background: rgba(236,194,44,0.2); color: var(--gold); border: 1px solid rgba(236,194,44,0.4); }
+
+  /* Position badges */
+  .pos-cortador { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .pos-handler  { background: rgba(168,85,247,0.15); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+  .pos-hibrido  { background: rgba(236,194,44,0.15); color: var(--gold); border: 1px solid rgba(236,194,44,0.3); }
+
+  /* Gender */
+  .gen-m { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+  .gen-f { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 1px solid rgba(236,72,153,0.3); }
+
+  /* Filter button */
+  .filter-btn { padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; border: 1px solid var(--border); color: var(--muted); background: transparent; font-family: 'Inter', sans-serif; }
+  .filter-btn:hover { border-color: rgba(236,194,44,0.4); color: var(--text); }
+  .filter-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #1a1400; border-color: transparent; }
+
+  /* Team card */
+  .team-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.2s; }
+  .team-card:hover { border-color: rgba(146,204,255,0.3); transform: translateY(-2px); }
+  .team-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--card-hi); border-radius: 2px; }
+
+  /* Tooltip */
+  .tooltip { position: relative; }
+  .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: var(--card-hi); color: var(--text); padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap; pointer-events: none; z-index: 10; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .live-dot { animation: pulse-dot 1.5s ease infinite; }
+</style>
+</head>
+<body>
+<div class="relative z-10">
+
+<!-- ═══ HEADER ═══ -->
+<header class="glass sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+  <div class="flex items-center gap-4">
+    <div>
+      <div class="hl text-xl font-black text-white tracking-tight">ATLAXDIVO</div>
+      <div class="lbl text-xs text-yellow-400 font-bold tracking-widest uppercase">Torneo Star Wars 4vs4</div>
+    </div>
+    <div class="hidden md:flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1">
+      <div class="w-2 h-2 rounded-full bg-green-400 live-dot"></div>
+      <span class="lbl text-xs text-green-400 font-bold">Inscripciones abiertas</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="https://atlaxdivo.com" target="_blank" class="lbl text-xs text-sky-400 hover:text-sky-300 transition-colors hidden md:flex items-center gap-1">
+      <span class="material-symbols-outlined text-sm">open_in_new</span> atlaxdivo.com
+    </a>
+    <button onclick="exportCSV()" class="flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/20 transition-colors rounded-lg px-4 py-2 lbl text-xs font-bold">
+      <span class="material-symbols-outlined text-sm">download</span> Exportar
+    </button>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+
+  <!-- HERO BANNER -->
+  <div class="relative overflow-hidden rounded-2xl mb-8 p-8 md:p-12" style="background: linear-gradient(135deg, #001c37 0%, #062b4c 50%, #001429 100%); border: 1px solid rgba(236,194,44,0.2);">
+    <div class="absolute top-0 right-0 w-64 h-64 opacity-5" style="background: radial-gradient(circle, #ecc22c, transparent)"></div>
+    <div class="absolute bottom-0 left-0 w-48 h-48 opacity-5" style="background: radial-gradient(circle, #92ccff, transparent)"></div>
+    <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div>
+        <div class="lbl text-yellow-400 text-xs font-black uppercase tracking-widest mb-2">⚡ Panel de Comando</div>
+        <h1 class="hl text-4xl md:text-5xl font-black text-white mb-3 leading-tight">
+          Torneo <span style="color: var(--gold)">Star Wars</span><br/>4vs4 Ultimate
+        </h1>
+        <p style="color: var(--muted)" class="text-sm max-w-lg">Gestión de jugadores inscritos, balanceo de equipos y seguimiento del torneo. Cancha Tizatlán · Frente al Hotel Señorial, Tlaxcala.</p>
+      </div>
+      <div class="glass rounded-xl p-5 text-center min-w-[140px]">
+        <div class="hl text-5xl font-black text-yellow-400" id="total-jugadores">0</div>
+        <div class="lbl text-xs uppercase tracking-wider mt-1" style="color: var(--muted)">Jugadores inscritos</div>
+        <div class="mt-3 w-full bg-gray-800 rounded-full h-1.5">
+          <div class="gold-gradient h-1.5 rounded-full transition-all duration-700" id="progress-bar" style="width: 0%"></div>
+        </div>
+        <div class="lbl text-xs mt-1" style="color: var(--muted)">Meta: <span id="meta-text">32 jugadores (8 equipos)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS GRID -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="stats-grid">
+    <div class="stat-card">
+      <div class="lbl text-xs uppercase tracking-wider mb-2" style="color: var(--muted)">Masculinos</div>
+      <div class="hl text-3xl font-black text-sky-400" id="stat-m">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="lbl text-xs uppercase tracking-wider mb-2" style="color: var(--muted)">Femeninas</div>
+      <div class="hl text-3xl font-black text-pink-400" id="stat-f">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="lbl text-xs uppercase tracking-wider mb-2" style="color: var(--muted)">Equipos posibles</div>
+      <div class="hl text-3xl font-black text-yellow-400" id="stat-equipos">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="lbl text-xs uppercase tracking-wider mb-2" style="color: var(--muted)">Nivel promedio</div>
+      <div class="hl text-xl font-black text-green-400" id="stat-nivel">—</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="flex gap-1 mb-6 glass rounded-xl p-1 w-fit">
+    <button class="tab-btn px-5 py-2 rounded-lg lbl text-sm font-bold transition-all active-tab" onclick="setTab('jugadores', this)" id="tab-jugadores">
+      🏃 Jugadores
+    </button>
+    <button class="tab-btn px-5 py-2 rounded-lg lbl text-sm font-bold transition-all text-gray-400" onclick="setTab('equipos', this)" id="tab-equipos">
+      ⚡ Equipos
+    </button>
+    <button class="tab-btn px-5 py-2 rounded-lg lbl text-sm font-bold transition-all text-gray-400" onclick="setTab('analisis', this)" id="tab-analisis">
+      📊 Análisis
+    </button>
+  </div>
+
+  <!-- TAB: JUGADORES -->
+  <div id="view-jugadores">
+    <!-- Filtros -->
+    <div class="flex flex-wrap gap-2 mb-5">
+      <span class="lbl text-xs text-gray-500 self-center mr-1">Filtrar:</span>
+      <button class="filter-btn active" onclick="filterPlayers('todos', this)">Todos</button>
+      <button class="filter-btn" onclick="filterPlayers('Novato', this)">Novato</button>
+      <button class="filter-btn" onclick="filterPlayers('Rocky', this)">Rocky</button>
+      <button class="filter-btn" onclick="filterPlayers('Intermedio', this)">Intermedio</button>
+      <button class="filter-btn" onclick="filterPlayers('Avanzado', this)">Avanzado</button>
+      <div class="w-px bg-gray-700 self-stretch mx-1"></div>
+      <button class="filter-btn" onclick="filterByGender('M', this)">Masculino</button>
+      <button class="filter-btn" onclick="filterByGender('F', this)">Femenino</button>
+      <div class="w-px bg-gray-700 self-stretch mx-1"></div>
+      <button class="filter-btn" onclick="filterByPos('Cortador', this)">Cortador</button>
+      <button class="filter-btn" onclick="filterByPos('Handler', this)">Handler</button>
+      <button class="filter-btn" onclick="filterByPos('Híbrido', this)">Híbrido</button>
+      <div class="ml-auto">
+        <input id="search-input" onkeyup="searchPlayers()" placeholder="🔍 Buscar jugador..." 
+          class="glass rounded-lg px-4 py-2 lbl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-yellow-400/50 border border-transparent" 
+          style="width: 220px"/>
+      </div>
+    </div>
+
+    <!-- Lista de jugadores -->
+    <div class="space-y-2" id="players-list">
+      <!-- Se llena con JS -->
+    </div>
+    <div id="empty-state" class="hidden text-center py-16">
+      <div class="text-5xl mb-4">🥏</div>
+      <div class="hl text-xl font-bold text-white mb-2">No hay jugadores aún</div>
+      <p style="color: var(--muted)" class="text-sm">Los registros del bot aparecerán aquí automáticamente</p>
+    </div>
+  </div>
+
+  <!-- TAB: EQUIPOS -->
+  <div id="view-equipos" class="hidden">
+    <div class="flex items-center justify-between mb-6">
+      <p style="color: var(--muted)" class="text-sm">Sorteo automático por nivel para equipos equilibrados. Mínimo 1 mujer por equipo.</p>
+      <button onclick="sortearEquipos()" class="gold-gradient text-yellow-900 font-black px-6 py-3 rounded-xl lbl text-sm hover:opacity-90 transition-opacity flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">shuffle</span> Sortear Equipos
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="teams-grid">
+      <!-- Se llena con JS -->
+    </div>
+    <div id="teams-empty" class="text-center py-16">
+      <div class="text-5xl mb-4">⚡</div>
+      <div class="hl text-xl font-bold text-white mb-2">Equipos por sortear</div>
+      <p style="color: var(--muted)" class="text-sm mb-6">Cuando tengas suficientes jugadores, haz clic en "Sortear Equipos"</p>
+    </div>
+  </div>
+
+  <!-- TAB: ANÁLISIS -->
+  <div id="view-analisis" class="hidden">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+      <!-- Por nivel -->
+      <div class="stat-card">
+        <h3 class="hl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-yellow-400">bar_chart</span> Por Nivel
+        </h3>
+        <div class="space-y-3" id="chart-nivel"></div>
+      </div>
+
+      <!-- Por posición -->
+      <div class="stat-card">
+        <h3 class="hl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sky-400">sports</span> Por Posición
+        </h3>
+        <div class="space-y-3" id="chart-posicion"></div>
+      </div>
+
+      <!-- Por género -->
+      <div class="stat-card">
+        <h3 class="hl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-pink-400">people</span> Balance de Género
+        </h3>
+        <div id="chart-genero"></div>
+      </div>
+
+      <!-- Reglamento -->
+      <div class="stat-card">
+        <h3 class="hl font-bold text-white mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-green-400">menu_book</span> Conocimiento del Reglamento
+        </h3>
+        <div class="space-y-3" id="chart-reglamento"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="text-center py-8 mt-8 border-t" style="border-color: var(--border)">
+  <div style="color: var(--muted)" class="text-xs lbl mb-2">
+    Panel de gestión · ATLAXDIVO · Torneo Star Wars 4vs4
+  </div>
+  <a href="https://mgiasoluciones.com" target="_blank" 
+    class="lbl text-xs font-bold text-sky-400 hover:text-sky-300 transition-colors flex items-center justify-center gap-1">
+    <span class="material-symbols-outlined text-sm">bolt</span>
+    Desarrollado por MGIA Soluciones · mgiasoluciones.com
+  </a>
+</footer>
+
+</div><!-- /z-10 -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATOS — Conectar aquí con Google Sheets via API o CSV export
+// Para demo, usamos datos de muestra realistas
+// ═══════════════════════════════════════════════════════════
+
+const NIVELES   = ['Novato', 'Rocky', 'Intermedio', 'Avanzado'];
+const POSICIONES = ['Cortador', 'Handler', 'Híbrido'];
+const NOMBRES_M = ['Carlos','Miguel','Andrés','Roberto','Diego','Javier','Fernando','Luis','Eduardo','Alejandro','Marco','David','Héctor','Jesús','Omar','Ricardo'];
+const NOMBRES_F = ['María','Ana','Laura','Sofía','Valentina','Andrea','Diana','Claudia','Paola','Isabel','Fernanda','Gabriela','Daniela','Mariana'];
+
+function randomName(genero) {
+  const pool = genero === 'M' ? NOMBRES_M : NOMBRES_F;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Datos de muestra — en producción esto viene de Google Sheets
+let ALL_PLAYERS = [
+  { id:1,  nombre:'Carlos Ramírez',     edad:24, genero:'M', nivel:'Avanzado',   posicion:'Handler',  reglamento:'100%', telegram:'@crams',    equipo:null },
+  { id:2,  nombre:'Laura Mendoza',      edad:21, genero:'F', nivel:'Intermedio', posicion:'Cortador', reglamento:'80%',  telegram:'@lmend',    equipo:null },
+  { id:3,  nombre:'Diego Flores',       edad:19, genero:'M', nivel:'Rocky',      posicion:'Cortador', reglamento:'40%',  telegram:'@dflores',  equipo:null },
+  { id:4,  nombre:'Sofía Castillo',     edad:26, genero:'F', nivel:'Avanzado',   posicion:'Híbrido',  reglamento:'100%', telegram:'@scastillo',equipo:null },
+  { id:5,  nombre:'Miguel Torres',      edad:22, genero:'M', nivel:'Intermedio', posicion:'Híbrido',  reglamento:'80%',  telegram:'@mtorres',  equipo:null },
+  { id:6,  nombre:'Andrea Vega',        edad:20, genero:'F', nivel:'Novato',     posicion:'Cortador', reglamento:'10%',  telegram:'@avega',    equipo:null },
+  { id:7,  nombre:'Roberto Sánchez',    edad:33, genero:'M', nivel:'Avanzado',   posicion:'Handler',  reglamento:'100%', telegram:'@rsanchez', equipo:null },
+  { id:8,  nombre:'Valentina Cruz',     edad:18, genero:'F', nivel:'Rocky',      posicion:'Cortador', reglamento:'40%',  telegram:'@vcruz',    equipo:null },
+  { id:9,  nombre:'Alejandro Moreno',   edad:27, genero:'M', nivel:'Intermedio', posicion:'Cortador', reglamento:'80%',  telegram:'@amoreno',  equipo:null },
+  { id:10, nombre:'Diana López',        edad:23, genero:'F', nivel:'Intermedio', posicion:'Handler',  reglamento:'80%',  telegram:'@dlopez',   equipo:null },
+  { id:11, nombre:'Jesús Hernández',    edad:25, genero:'M', nivel:'Rocky',      posicion:'Híbrido',  reglamento:'40%',  telegram:'@jhernandez',equipo:null },
+  { id:12, nombre:'Mariana Guerrero',   edad:22, genero:'F', nivel:'Avanzado',   posicion:'Handler',  reglamento:'100%', telegram:'@mguerrero',equipo:null },
+  { id:13, nombre:'Omar Jiménez',       edad:20, genero:'M', nivel:'Novato',     posicion:'Cortador', reglamento:'10%',  telegram:'@ojimenez', equipo:null },
+  { id:14, nombre:'Gabriela Ruiz',      edad:29, genero:'F', nivel:'Intermedio', posicion:'Híbrido',  reglamento:'80%',  telegram:'@gruiz',    equipo:null },
+  { id:15, nombre:'Fernando Ortiz',     edad:31, genero:'M', nivel:'Avanzado',   posicion:'Cortador', reglamento:'100%', telegram:'@fortiz',   equipo:null },
+  { id:16, nombre:'Daniela Ramos',      edad:19, genero:'F', nivel:'Rocky',      posicion:'Cortador', reglamento:'40%',  telegram:'@dramos',   equipo:null },
+];
+
+let filteredPlayers = [...ALL_PLAYERS];
+let activeFilter = 'todos';
+let activeGender = null;
+let activePos = null;
+let searchTerm = '';
+let teams = [];
+
+const STAR_WARS_TEAMS = [
+  { nombre:'Rebelión', color:'#f87171', icon:'⚔️', dark: false },
+  { nombre:'Imperio',  color:'#9ca3af', icon:'🦅', dark: false },
+  { nombre:'Jedi',     color:'#60a5fa', icon:'💙', dark: false },
+  { nombre:'Sith',     color:'#c084fc', icon:'⚡', dark: false },
+  { nombre:'Mandalorianos', color:'#fcd34d', icon:'🎯', dark: false },
+  { nombre:'Resistencia',   color:'#4ade80', icon:'🌿', dark: false },
+  { nombre:'Orden 66', color:'#fb923c', icon:'🔴', dark: false },
+  { nombre:'Fuerza Gris',   color:'#a78bfa', icon:'🌀', dark: false },
+];
+
+// ═══ BADGE HELPERS ═══
+function levelBadge(nivel) {
+  const map = { 'Novato':'badge-novato','Rocky':'badge-rocky','Intermedio':'badge-intermedio','Avanzado':'badge-avanzado' };
+  return `<span class="badge ${map[nivel]||'badge-novato'}">${nivel}</span>`;
+}
+function posBadge(pos) {
+  const map = { 'Cortador':'pos-cortador','Handler':'pos-handler','Híbrido':'pos-hibrido' };
+  const icon = { 'Cortador':'🏃','Handler':'🥏','Híbrido':'⚡' };
+  return `<span class="badge ${map[pos]||''}">${icon[pos]||''} ${pos}</span>`;
+}
+function genBadge(gen) {
+  return gen === 'M'
+    ? `<span class="badge gen-m">♂ Masc</span>`
+    : `<span class="badge gen-f">♀ Fem</span>`;
+}
+function reglBar(pct) {
+  const num = parseInt(pct);
+  const color = num >= 80 ? '#4ade80' : num >= 40 ? '#fcd34d' : '#f87171';
+  return `<div style="display:flex;align-items:center;gap:8px;min-width:120px">
+    <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:4px;height:6px">
+      <div style="width:${pct};background:${color};height:6px;border-radius:4px;transition:width 0.5s"></div>
+    </div>
+    <span class="lbl text-xs" style="color:${color};min-width:32px">${pct}</span>
+  </div>`;
+}
+
+// ═══ RENDER PLAYERS ═══
+function renderPlayers(list) {
+  const container = document.getElementById('players-list');
+  const empty = document.getElementById('empty-state');
+  if (!list.length) {
+    container.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  container.innerHTML = list.map((p, i) => `
+    <div class="player-row fade-in" style="animation-delay:${i*0.03}s">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4497d3,#062b4c);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="hl font-black text-white text-sm">${p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2)}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="hl font-bold text-white text-sm truncate">${p.nombre}</div>
+        <div class="lbl text-xs" style="color:var(--muted)">${p.telegram || '—'} · ${p.edad} años</div>
+      </div>
+      <div class="hidden md:flex items-center gap-2 flex-wrap">
+        ${genBadge(p.genero)}
+        ${levelBadge(p.nivel)}
+        ${posBadge(p.posicion)}
+      </div>
+      <div class="hidden lg:block">${reglBar(p.reglamento)}</div>
+      <div style="min-width:100px;text-align:right">
+        ${p.equipo
+          ? `<span class="badge" style="background:rgba(236,194,44,0.15);color:var(--gold);border:1px solid rgba(236,194,44,0.3)">⚡ ${p.equipo}</span>`
+          : `<span class="lbl text-xs" style="color:var(--muted)">Sin equipo</span>`
+        }
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══ STATS ═══
+function updateStats(list) {
+  const total = ALL_PLAYERS.length;
+  const shown = list.length;
+  document.getElementById('total-jugadores').textContent = total;
+  document.getElementById('stat-m').textContent = ALL_PLAYERS.filter(p=>p.genero==='M').length;
+  document.getElementById('stat-f').textContent = ALL_PLAYERS.filter(p=>p.genero==='F').length;
+  const equiposPosibles = Math.floor(total / 4);
+  document.getElementById('stat-equipos').textContent = Math.min(equiposPosibles, 8);
+  const meta = 32;
+  document.getElementById('progress-bar').style.width = Math.min(100, (total/meta)*100) + '%';
+
+  // Nivel promedio
+  const nivelPts = { 'Novato':1,'Rocky':2,'Intermedio':3,'Avanzado':4 };
+  const avg = ALL_PLAYERS.reduce((s,p)=>s+(nivelPts[p.nivel]||1),0)/Math.max(total,1);
+  const avgLabel = avg < 1.5 ? 'Novato' : avg < 2.5 ? 'Rocky' : avg < 3.5 ? 'Intermedio' : 'Avanzado';
+  document.getElementById('stat-nivel').textContent = avgLabel;
+}
+
+// ═══ CHARTS ═══
+function renderCharts() {
+  const total = ALL_PLAYERS.length || 1;
+
+  // Nivel
+  const nivelCounts = {};
+  NIVELES.forEach(n => nivelCounts[n] = ALL_PLAYERS.filter(p=>p.nivel===n).length);
+  const nivelColors = { 'Novato':'#6b7280','Rocky':'#60a5fa','Intermedio':'#4ade80','Avanzado':'#ecc22c' };
+  document.getElementById('chart-nivel').innerHTML = NIVELES.map(n => `
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span class="lbl text-xs text-gray-300">${n}</span>
+        <span class="lbl text-xs font-bold" style="color:${nivelColors[n]}">${nivelCounts[n]}</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:8px">
+        <div style="width:${(nivelCounts[n]/total)*100}%;background:${nivelColors[n]};height:8px;border-radius:4px;transition:width 0.8s"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Posición
+  const posCounts = {};
+  POSICIONES.forEach(p => posCounts[p] = ALL_PLAYERS.filter(pl=>pl.posicion===p).length);
+  const posColors = { 'Cortador':'#f87171','Handler':'#c084fc','Híbrido':'#ecc22c' };
+  document.getElementById('chart-posicion').innerHTML = POSICIONES.map(p => `
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span class="lbl text-xs text-gray-300">${p}</span>
+        <span class="lbl text-xs font-bold" style="color:${posColors[p]}">${posCounts[p]}</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:8px">
+        <div style="width:${(posCounts[p]/total)*100}%;background:${posColors[p]};height:8px;border-radius:4px;transition:width 0.8s"></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Género
+  const m = ALL_PLAYERS.filter(p=>p.genero==='M').length;
+  const f = ALL_PLAYERS.filter(p=>p.genero==='F').length;
+  const pctM = Math.round((m/total)*100);
+  const pctF = 100 - pctM;
+  document.getElementById('chart-genero').innerHTML = `
+    <div style="display:flex;border-radius:8px;overflow:hidden;height:32px;margin-bottom:12px">
+      <div style="width:${pctM}%;background:#3b82f6;display:flex;align-items:center;justify-content:center">
+        <span class="lbl text-xs font-black text-white">♂ ${m}</span>
+      </div>
+      <div style="width:${pctF}%;background:#ec4899;display:flex;align-items:center;justify-content:center">
+        <span class="lbl text-xs font-black text-white">♀ ${f}</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span class="lbl text-xs text-blue-400">${pctM}% Masculino</span>
+      <span class="lbl text-xs text-pink-400">${pctF}% Femenino</span>
+    </div>
+    <div class="lbl text-xs mt-3 p-3 rounded-lg" style="background:rgba(255,255,255,0.04);color:var(--muted)">
+      ${f >= 4 ? '✅ Hay suficientes mujeres para todos los equipos' : `⚠️ Se necesitan ${Math.max(0,4-f)} mujeres más para cubrir todos los equipos`}
+    </div>
+  `;
+
+  // Reglamento
+  const reglCounts = {'10%':0,'40%':0,'80%':0,'100%':0};
+  ALL_PLAYERS.forEach(p => { if(reglCounts[p.reglamento]!==undefined) reglCounts[p.reglamento]++ });
+  const reglColors = {'10%':'#f87171','40%':'#fcd34d','80%':'#4ade80','100%':'#60a5fa'};
+  document.getElementById('chart-reglamento').innerHTML = Object.entries(reglCounts).map(([k,v]) => `
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span class="lbl text-xs text-gray-300">${k} familiarizado</span>
+        <span class="lbl text-xs font-bold" style="color:${reglColors[k]}">${v}</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.06);border-radius:4px;height:8px">
+        <div style="width:${(v/total)*100}%;background:${reglColors[k]};height:8px;border-radius:4px;transition:width 0.8s"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══ SORTEO DE EQUIPOS ═══
+function sortearEquipos() {
+  if (ALL_PLAYERS.length < 4) {
+    alert('Se necesitan al menos 4 jugadores para sortear equipos.');
+    return;
+  }
+
+  const numEquipos = Math.min(8, Math.max(4, Math.floor(ALL_PLAYERS.length / 4)));
+  const nivelPts = { 'Novato':1,'Rocky':2,'Intermedio':3,'Avanzado':4 };
+
+  // Ordenar por nivel desc
+  const sorted = [...ALL_PLAYERS].sort((a,b) => (nivelPts[b.nivel]||1)-(nivelPts[a.nivel]||1));
+
+  // Inicializar equipos
+  teams = Array.from({length: numEquipos}, (_, i) => ({
+    ...STAR_WARS_TEAMS[i],
+    jugadores: [],
+    puntos: 0,
+    mujeres: 0
+  }));
+
+  // Serpenteo balanceado
+  let dir = 1, idx = 0;
+  sorted.forEach(player => {
+    const t = teams[idx];
+    const assigned = { ...player, equipo: t.nombre };
+    t.jugadores.push(assigned);
+    t.puntos += nivelPts[player.nivel] || 1;
+    if (player.genero === 'F') t.mujeres++;
+    // Update player
+    const p = ALL_PLAYERS.find(pl => pl.id === player.id);
+    if (p) p.equipo = t.nombre;
+
+    idx += dir;
+    if (idx >= numEquipos) { idx = numEquipos-1; dir = -1; }
+    else if (idx < 0) { idx = 0; dir = 1; }
+  });
+
+  renderTeams();
+  applyFilters();
+  document.getElementById('teams-empty').classList.add('hidden');
+}
+
+function renderTeams() {
+  const grid = document.getElementById('teams-grid');
+  grid.innerHTML = teams.map(t => `
+    <div class="team-card">
+      <div class="team-header" style="background: linear-gradient(135deg, ${t.color}22, transparent)">
+        <div style="width:40px;height:40px;border-radius:50%;background:${t.color}33;border:2px solid ${t.color}66;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+          ${t.icon}
+        </div>
+        <div>
+          <div class="hl font-black text-white text-base">${t.nombre}</div>
+          <div class="lbl text-xs" style="color:var(--muted)">${t.jugadores.length} jugadores · ${t.mujeres} ♀</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="hl font-black text-sm" style="color:${t.color}">${t.puntos}pts</div>
+          <div class="lbl text-xs" style="color:var(--muted)">nivel</div>
+        </div>
+      </div>
+      <div class="p-4 space-y-2">
+        ${t.jugadores.map(p => `
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+            <div style="width:28px;height:28px;border-radius:50%;background:${t.color}22;border:1px solid ${t.color}44;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span style="font-size:11px;font-weight:800;color:${t.color};font-family:'Space Grotesk'">${p.nombre.split(' ').map(w=>w[0]).join('').slice(0,2)}</span>
+            </div>
+            <div style="flex:1;min-width:0">
+              <div class="lbl text-xs font-bold text-white truncate">${p.nombre}</div>
+              <div class="lbl" style="font-size:10px;color:var(--muted)">${p.posicion}</div>
+            </div>
+            ${levelBadge(p.nivel)}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══ FILTROS ═══
+function applyFilters() {
+  let result = [...ALL_PLAYERS];
+  if (activeFilter !== 'todos') result = result.filter(p => p.nivel === activeFilter);
+  if (activeGender) result = result.filter(p => p.genero === activeGender);
+  if (activePos) result = result.filter(p => p.posicion === activePos);
+  if (searchTerm) result = result.filter(p => p.nombre.toLowerCase().includes(searchTerm));
+  filteredPlayers = result;
+  renderPlayers(filteredPlayers);
+  updateStats(filteredPlayers);
+}
+
+function filterPlayers(nivel, btn) {
+  activeFilter = nivel;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function filterByGender(gen, btn) {
+  activeGender = activeGender === gen ? null : gen;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if (b.textContent.trim() === 'Masculino' || b.textContent.trim() === 'Femenino') b.classList.remove('active');
+  });
+  if (activeGender) btn.classList.add('active');
+  applyFilters();
+}
+
+function filterByPos(pos, btn) {
+  activePos = activePos === pos ? null : pos;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if (['Cortador','Handler','Híbrido'].includes(b.textContent.trim())) b.classList.remove('active');
+  });
+  if (activePos) btn.classList.add('active');
+  applyFilters();
+}
+
+function searchPlayers() {
+  searchTerm = document.getElementById('search-input').value.toLowerCase();
+  applyFilters();
+}
+
+// ═══ TABS ═══
+function setTab(tab, btn) {
+  ['jugadores','equipos','analisis'].forEach(t => {
+    document.getElementById('view-'+t).classList.add('hidden');
+    document.getElementById('tab-'+t).classList.remove('active-tab');
+    document.getElementById('tab-'+t).style.background = 'transparent';
+    document.getElementById('tab-'+t).style.color = '#6b7280';
+  });
+  document.getElementById('view-'+tab).classList.remove('hidden');
+  btn.style.background = 'linear-gradient(135deg, #ecc22c, #cea701)';
+  btn.style.color = '#1a1400';
+  btn.classList.add('active-tab');
+  if (tab === 'analisis') renderCharts();
+}
+
+// ═══ EXPORT ═══
+function exportCSV() {
+  const headers = ['Nombre','Edad','Género','Nivel','Posición','Reglamento','Telegram','Equipo'];
+  const rows = ALL_PLAYERS.map(p => [
+    p.nombre, p.edad, p.genero, p.nivel, p.posicion, p.reglamento, p.telegram||'', p.equipo||''
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'atlaxdivo_torneo_starwars.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', () => {
+  // Set initial tab style
+  const t = document.getElementById('tab-jugadores');
+  t.style.background = 'linear-gradient(135deg, #ecc22c, #cea701)';
+  t.style.color = '#1a1400';
+
+  renderPlayers(ALL_PLAYERS);
+  updateStats(ALL_PLAYERS);
+});
+</script>
+</body>
+</html>
